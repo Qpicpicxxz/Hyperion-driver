@@ -1,0 +1,86 @@
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/pinctrl-zynqmp.h>
+
+/include/ "system-conf.dtsi"
+/{
+	chosen {
+		bootargs = "earlycon console=ttyPS0,115200 clk_ignore_unused uio_pdrv_genirq.of_id=generic-uio root=/dev/mmcblk0p2 rw rootwait";
+		stdout-path = "serial0:115200n8";
+	};
+	reserved-memory
+	{
+    #address-cells = <2>;
+    #size-cells = <2>;
+    ranges;
+    reserved_tmp: buffer@50000000
+    {
+        no-map;
+        reg = <0x0 0x50000000 0x0 0x10000000>;
+    };
+	};
+	reserved-driver1@1
+	{
+		compatible = "xlnx,reserved-memory";
+		memory-region = <&reserved_tmp>;
+	};
+	dma_proxy {
+		compatible = "xlnx,dma_proxy";
+		dmas = <&fpd_dma_chan1 0  &fpd_dma_chan2 1>;
+		dma-names = "dma_proxy_tx", "dma_proxy_rx";
+		dma-coherent;
+	};
+};
+
+&fpd_dma_chan1 {
+	status = "okay";
+	#dma-cells = <1>;
+};
+
+&fpd_dma_chan2 {
+	status = "okay";
+	#dma-cells = <1>;
+};
+
+&gpio {
+	status = "okay";
+};
+
+&pinctrl0 {
+	status = "okay";
+	pinctrl_led_default: led-default {
+		mux {
+			groups = "gpio0_44_grp";
+			function = "gpio0";
+		};
+		conf {
+			pins = "MIO44";
+			bias-disable;
+			slew-rate = <SLEW_RATE_SLOW>;
+			io-standard = <IO_STANDARD_LVCMOS18>;
+    };
+	};
+};
+
+/* SD */
+&sdhci1 {
+	disable-wp;
+	no-1-8-v;
+};
+/* USB */
+&dwc3_0 {
+	/delete-property/ phy-names ;
+	/delete-property/ phys ;
+	dr_mode = "host";
+	maximum-speed = "high-speed";
+	snps,dis_u2_susphy_quirk ;
+	snps,dis_u3_susphy_quirk ;
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+	i2c_eeprom@50 {
+		compatible = "ax_eeprom";
+		reg = <0x50>;
+	};
+};
